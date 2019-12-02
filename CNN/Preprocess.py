@@ -80,7 +80,7 @@ if __name__ == "__main__":
     
     data = []
     label_array = []
-    pics_num = 100
+    pics_num = 5
     print("This generates the dataset with first {0} images".format(pics_num))
     for num in range(pics_num):
         bin_img = get_binary_image(num)
@@ -98,8 +98,8 @@ if __name__ == "__main__":
         
     data = np.array(data)
     label_array = np.array(label_array)
-    np.save("data4_100.npy", data)
-    np.save("label4_100.npy", label_array)
+    np.save("data{0}_{1}.npy".format(label_array.shape[1],pics_num), data)
+    np.save("label{0}_{1}.npy".format(label_array.shape[1],pics_num), label_array)
     
     
     
