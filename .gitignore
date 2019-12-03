@@ -1,4 +1,5 @@
 *.npy
+*.mat
 
 !data5_100.npy
 !label5_100.npy

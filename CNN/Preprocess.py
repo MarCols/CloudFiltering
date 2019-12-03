@@ -11,6 +11,7 @@ import pandas as pd
 import cv2
 import random
 from matplotlib import pyplot as plt
+import scipy.io
 
 train_csv = pd.read_csv('../../../Kaggle_Data/understanding_cloud_organization/train.csv')
 sub_csv = pd.read_csv('../../../Kaggle_Data/understanding_cloud_organization/sample_submission.csv')
@@ -94,7 +95,8 @@ if __name__ == "__main__":
     label_array_f = []
     pics_num = 300
     print("This generates the dataset with first {0} images".format(pics_num))
-    size = 64
+    size = 128
+    stride = 64
     
     print("Generating...")
     # Crop Image Patches for 4 Class
@@ -109,10 +111,10 @@ if __name__ == "__main__":
         label_t = get_onehot_label(num)
         label_f = [0,0,0,0,1]
         
-        for i in range(int(height/size)):
-            for j in range(int(width/size)):
-                crop_t = bin_img_t[i*size:(i+1)*size, j*size:(j+1)*size]
-                crop_f = bin_img_f[i*size:(i+1)*size, j*size:(j+1)*size]
+        for i in range(int((height-size)/stride)):
+            for j in range(int((width-size)/stride)):
+                crop_t = bin_img_t[i*stride:size + i*stride, j*stride:size + j*stride]
+                crop_f = bin_img_f[i*stride:size + i*stride, j*stride:size + j*stride]
                 if np.any(crop_t == 0) and np.any(crop_f == 0):
                     continue
                 elif np.any(crop_t == 0):
@@ -132,6 +134,9 @@ if __name__ == "__main__":
     np.save("data{0}_{1}.npy".format(label_array.shape[1],pics_num), data)
     np.save("label{0}_{1}.npy".format(label_array.shape[1],pics_num), label_array)
     print("Finished and saved in npy file\n")
+    
+    scipy.io.savemat("data{0}_{1}.mat".format(label_array.shape[1],pics_num), {'name':data})
+    scipy.io.savemat("label{0}_{1}.mat".format(label_array.shape[1],pics_num), {'name':label_array})
     
     show_class_num(label_array)
     
