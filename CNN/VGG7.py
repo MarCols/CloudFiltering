@@ -29,8 +29,8 @@ import numpy as np
 print(tf.__version__)
 print(keras.__version__)
 
-data = np.load("data64_1000.npy")
-label_array = np.load("label64_1000.npy")
+data = np.load("data5_300.npy")
+label_array = np.load("label5_300.npy")
 
 # Prepare data
 X_train, X_test, y_train, y_test = train_test_split(data, label_array, test_size=0.2)
@@ -60,7 +60,7 @@ with tf.Graph().as_default():
     x = Dropout(0.5, name='dropout1')(x)
     x = Dense(1024, activation='relu', name='fc2')(x)
     x = Dropout(0.5, name='dropout2')(x)
-    predictions = Dense(4, activation='softmax', name='predictions')(x)
+    predictions = Dense(5, activation='softmax', name='predictions')(x)
 
     BATCH_SIZE = 512
     #sgd = optimizers.SGD(lr=0.01,
@@ -91,12 +91,12 @@ with tf.Graph().as_default():
                              cooldown=0,
                              min_lr=0.00001)
     
-    es_cb = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='auto')
+    #es_cb = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='auto')
     #tb_cb = TensorBoard(log_dir="./tensorlog", histogram_freq=1)
      
     parallel_model.fit(X_train, y_train, batch_size=BATCH_SIZE, epochs=200, verbose=1,
                   callbacks=[rlop], validation_data=(X_test, y_test))
-    parallel_model.save('VGG7_200.h5')
+    parallel_model.save('VGG7_300.h5')
     y_pred = parallel_model.predict(X_test, verbose=1)
     score = parallel_model.evaluate(X_test, y_test, verbose=0)
     print('Test score:', score[0])
