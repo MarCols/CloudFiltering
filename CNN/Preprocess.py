@@ -11,6 +11,7 @@ import pandas as pd
 import cv2
 import random
 from matplotlib import pyplot as plt
+import matplotlib.patches as mpatches
 import scipy.io
 
 train_csv = pd.read_csv('../../../Kaggle_Data/understanding_cloud_organization/train.csv')
@@ -93,36 +94,49 @@ if __name__ == "__main__":
     data_f = []
     label_array_t = []    
     label_array_f = []
-    pics_num = 300
+    pics_num = 1
     print("This generates the dataset with first {0} images".format(pics_num))
     size = 128
     stride = 64
     
     print("Generating...")
+    
     # Crop Image Patches for 4 Class
     for num in range(pics_num):
+        rand_num = np.random.choice(len(train_df), pics_num, replace=False)
+        
         # Crop Image Patches for 4 Class
-        bin_img_t = get_binary_image(num, True)
+        bin_img_t = get_binary_image(rand_num[num], True)
         # Crop Image Patches for Non Labeled Class
-        bin_img_f = get_binary_image(num, False)
+        bin_img_f = get_binary_image(rand_num[num], False)
         
         height, width = bin_img_t.shape[0], bin_img_f.shape[1]
         
-        label_t = get_onehot_label(num)
+        label_t = get_onehot_label(rand_num[num])
         label_f = [0,0,0,0,1]
         
+        fig = plt.figure(figsize = (20, 8))
+        ax = fig.add_subplot(2,1,1)
+        ax.imshow(bin_img_f[:,:,0])
+        ax2 = fig.add_subplot(2,2,1)
+        ax2.imshow(bin_img_f[:,:,0])
         for i in range(int((height-size)/stride)):
             for j in range(int((width-size)/stride)):
                 crop_t = bin_img_t[i*stride:size + i*stride, j*stride:size + j*stride]
                 crop_f = bin_img_f[i*stride:size + i*stride, j*stride:size + j*stride]
-                if np.any(crop_t == 0) and np.any(crop_f == 0):
-                    continue
-                elif np.any(crop_t == 0):
+        
+                if np.all(crop_t > 0) and np.all(crop_f == 0):
+                    data_t.append(crop_t)
+                    label_array_t.append(label_t)
+                    
+                elif np.all(crop_f > 0) and np.all(crop_t == 0):
                     data_f.append(crop_f)
                     label_array_f.append(label_f)
-                elif np.any(crop_f == 0):
-                    data_t.append(crop_t)
-                    label_array_t.append(label_t) 
+                    rect = mpatches.Rectangle(
+                            (j*stride, i*stride), size, size, fill=False, edgecolor='white', linewidth=1)
+                    ax.add_patch(rect)
+        plt.savefig("space_variation.jpg")
+        plt.show()
         if num%100==0 and num > 0: print("{0} images are done".format(num))
                 
     # Merge 4 class label cropped image and non labeled cropped image, euqalizing number of data 
