@@ -34,7 +34,6 @@ label_array = np.load("label5_100.npy")
 
 # Prepare data
 X_train, X_test, y_train, y_test = train_test_split(data, label_array, test_size=0.2)
-
 X_train = X_train.astype('float32')
 y_train = y_train.astype('float32')
 
@@ -43,29 +42,25 @@ y_train /=256
 
 old_session = KTF.get_session()
 
-kernel_size = 10
 with tf.Graph().as_default():
     session = tf.Session('')
     KTF.set_session(session)
     KTF.set_learning_phase(1)
     
     inputs = Input(shape=(128, 128, 1))
-    x = Conv2D(64, (kernel_size, kernel_size), activation='relu', padding='same', name='block1_conv1')(inputs)
+    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1')(inputs)
     x = BatchNormalization()(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='block1_pool')(x)
-    x = Conv2D(128, (kernel_size, kernel_size), activation='relu', padding='same', name='block2_conv1')(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv1')(x)
     x = BatchNormalization()(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='block2_pool')(x)
-    x = Conv2D(192, (kernel_size, kernel_size), activation='relu', padding='same', name='block3_conv1')(x)
+    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv1')(x)
     x = BatchNormalization()(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='block3_pool')(x)
-    x = Conv2D(256, (kernel_size, kernel_size), activation='relu', padding='same', name='block4_conv1')(x)
-    x = BatchNormalization()(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='block5_pool')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='block4_pool')(x)
     flattened = Flatten(name='flatten')(x)
     x = Dense(1024, activation='relu', name='fc1')(flattened)
     x = Dropout(0.5, name='dropout1')(x)
-    x = Dense(1024, activation='relu', name='fc2')(x)
+    x = Dense(256, activation='relu', name='fc2')(x)
     x = Dropout(0.5, name='dropout2')(x)
     predictions = Dense(5, activation='softmax', name='predictions')(x)
 
@@ -103,7 +98,7 @@ with tf.Graph().as_default():
      
     parallel_model.fit(X_train, y_train, batch_size=BATCH_SIZE, epochs=200, verbose=1,
                   callbacks=[rlop], validation_data=(X_test, y_test))
-    parallel_model.save('VGG7_300.h5')
+    parallel_model.save('VGG6_100.h5')
     y_pred = parallel_model.predict(X_test, verbose=1)
     score = parallel_model.evaluate(X_test, y_test, verbose=0)
     print('Test score:', score[0])
