@@ -52,9 +52,12 @@ def show_RoI(img_mask, img_origin, mask = True):
         result[np.where(img_mask==255)] = 0
     return result
 
-def get_binary_image(i, mask= True):
+def get_binary_image(i, mask = True):
     img = cv2.imread(BASE_DIR + train_df['ImageId'][i])
-    img_mask = rle_to_mask(train_df['EncodedPixels'][i], img)
+    if mask:
+        img_mask = rle_to_mask(train_df['EncodedPixels'][i], img)
+    else:
+        img_mask = rle_to_mask(get_mask_list(i), img)
     img_new = show_RoI(img_mask, img, mask)
 #    print("Label Type:", train_df['Label'][i])
 #    show(img_new)
@@ -72,6 +75,14 @@ def get_onehot_label(i):
         label = [0,0,0,1,0]
     return label
 
+def get_mask_list(num):
+    mask_df = train_df[train_df['ImageId'] == train_df['ImageId'][num]] \
+                                                ['EncodedPixels'].reset_index().drop("index", axis=1)
+    mask_list = ''
+    for i in range(len(mask_df)):
+        mask_list += mask_df['EncodedPixels'][i] + ' '
+    return mask_list[0:len(mask_list)-1]
+    
 def show_class_num(label_array):
     print("-------------- Number of Class Distribution -----------------")
     print("     Fish, Flower, Gravel, Sugar, Non:\n     {0}, {1}, {2}, {3}, {4}".format(
@@ -94,8 +105,8 @@ if __name__ == "__main__":
     data_f = []
     label_array_t = []    
     label_array_f = []
-    pics_num = 1
-    print("This generates the dataset with first {0} images".format(pics_num))
+    pics_num = 100
+    print("This generates the dataset with random {0} images".format(pics_num))
     size = 128
     stride = 64
     
@@ -115,11 +126,11 @@ if __name__ == "__main__":
         label_t = get_onehot_label(rand_num[num])
         label_f = [0,0,0,0,1]
         
-        fig = plt.figure(figsize = (20, 8))
-        ax = fig.add_subplot(2,1,1)
-        ax.imshow(bin_img_f[:,:,0])
-        ax2 = fig.add_subplot(2,2,1)
-        ax2.imshow(bin_img_f[:,:,0])
+#        fig = plt.figure(figsize = (6, 8))
+#        ax = fig.add_subplot(2,1,1)
+#        ax.imshow(bin_img_t[:,:,0], cmap = 'gray')
+#        ax2 = fig.add_subplot(2,1,2)
+#        ax2.imshow(bin_img_f[:,:,0], cmap = 'gray')
         for i in range(int((height-size)/stride)):
             for j in range(int((width-size)/stride)):
                 crop_t = bin_img_t[i*stride:size + i*stride, j*stride:size + j*stride]
@@ -128,15 +139,18 @@ if __name__ == "__main__":
                 if np.all(crop_t > 0) and np.all(crop_f == 0):
                     data_t.append(crop_t)
                     label_array_t.append(label_t)
+#                    rect = mpatches.Rectangle(
+#                            (j*stride, i*stride), size, size, fill=False, edgecolor='blue', linewidth=1)
+#                    ax.add_patch(rect)
                     
                 elif np.all(crop_f > 0) and np.all(crop_t == 0):
                     data_f.append(crop_f)
                     label_array_f.append(label_f)
-                    rect = mpatches.Rectangle(
-                            (j*stride, i*stride), size, size, fill=False, edgecolor='white', linewidth=1)
-                    ax.add_patch(rect)
-        plt.savefig("space_variation.jpg")
-        plt.show()
+#                    rect = mpatches.Rectangle(
+#                            (j*stride, i*stride), size, size, fill=False, edgecolor='blue', linewidth=1)
+#                    ax2.add_patch(rect)
+#        plt.savefig("space_variation.jpg")
+#        plt.show()
         if num%100==0 and num > 0: print("{0} images are done".format(num))
                 
     # Merge 4 class label cropped image and non labeled cropped image, euqalizing number of data 
@@ -145,12 +159,12 @@ if __name__ == "__main__":
     label_array = np.concatenate([np.array(label_array_t), 
                                   np.array(label_array_f)[np.random.choice(len(label_array_f), int(len(label_array_t)/4), replace=False), :]], axis=0)
     
-    np.save("data{0}_{1}.npy".format(label_array.shape[1],pics_num), data)
-    np.save("label{0}_{1}.npy".format(label_array.shape[1],pics_num), label_array)
+    np.save("data{0}_{1}.npy".format(crop_t.shape[0], pics_num), data)
+    np.save("label{0}_{1}.npy".format(crop_t.shape[0], pics_num), label_array)
     print("Finished and saved in npy file\n")
     
-    scipy.io.savemat("data{0}_{1}.mat".format(label_array.shape[1],pics_num), {'name':data})
-    scipy.io.savemat("label{0}_{1}.mat".format(label_array.shape[1],pics_num), {'name':label_array})
+    scipy.io.savemat("data{0}_{1}.mat".format(crop_t.shape[0],pics_num), {'name':data})
+    scipy.io.savemat("label{0}_{1}.mat".format(crop_t.shape[0],pics_num), {'name':label_array})
     
     show_class_num(label_array)
     
